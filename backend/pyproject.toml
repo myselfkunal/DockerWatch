@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dockerwatch-backend"
+version = "0.1.0"
+description = "DockerWatch backend service"
+requires-python = ">=3.11"
+
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "sqlalchemy",
+    "alembic",
+    "asyncpg",
+    "python-jose[cryptography]",
+    "apscheduler",
+    "resend",
+    "stripe",
+    "psycopg2-binary",
+    "pydantic-settings"
+]
+
+[tool.uvicorn]
+reload = true
