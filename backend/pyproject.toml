@@ -19,6 +19,8 @@ dependencies = [
     "resend",
     "stripe",
     "psycopg2-binary",
+    "email-validator",
+    "passlib[bcrypt]",
     "pydantic-settings"
 ]
 
