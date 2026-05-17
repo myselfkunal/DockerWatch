@@ -60,6 +60,13 @@ class WorkspaceOut(BaseModel):
 class ServerCreate(BaseModel):
     name: str
 
+class ContainerOut(BaseModel):
+    id: uuid.UUID
+    name: str
+    status: str | None = None
+    last_status: str | None = None
+
+    model_config = {"from_attributes": True}
 
 class ServerOut(BaseModel):
     id: uuid.UUID
@@ -67,8 +74,9 @@ class ServerOut(BaseModel):
     last_seen_at: datetime | None
     created_at: datetime
 
-    model_config = {"from_attributes": True}
+    containers: list["ContainerOut"] = []
 
+    model_config = {"from_attributes": True}
 
 class ServerCreatedResponse(BaseModel):
     """Returned ONCE on server creation — includes the raw API key.
