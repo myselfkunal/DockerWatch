@@ -5,6 +5,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.api.deps import get_current_user
 from app.api.schemas import (
@@ -85,9 +86,13 @@ async def list_servers(
     db: AsyncSession = Depends(get_db),
 ):
     await _get_owned_workspace(workspace_id, current_user.id, db)
+
     result = await db.execute(
-        select(Server).where(Server.workspace_id == workspace_id)
+        select(Server)
+        .options(selectinload(Server.containers))
+        .where(Server.workspace_id == workspace_id)
     )
+
     return result.scalars().all()
 
 
