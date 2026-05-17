@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.api.routes import auth, workspaces, ingest
+from app.api.routes import auth, workspaces, ingest, metrics, cost_routes
 
 app = FastAPI(
     title="DockerWatch API",
@@ -21,6 +21,8 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(workspaces.router)
 app.include_router(ingest.router)
+app.include_router(metrics.router)
+app.include_router(cost_routes.router)
 
 
 @app.get("/health")
