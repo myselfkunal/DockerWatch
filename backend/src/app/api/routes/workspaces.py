@@ -15,7 +15,7 @@ from app.api.schemas import (
     WorkspaceCreate,
     WorkspaceOut,
 )
-from app.db.models import Server, Subscription, User, Workspace
+from app.db.models import Server, User, Workspace
 from app.db.session import get_db
 
 router = APIRouter(prefix="/workspaces", tags=["workspaces"])

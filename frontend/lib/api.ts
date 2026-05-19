@@ -1,22 +1,36 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 async function apiFetch<T>(
   path: string,
-  token: string,
+  token?: string,
   options: RequestInit = {}
 ): Promise<T> {
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+    ...(options.headers || {}),
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      ...options.headers,
-    },
+    headers,
   });
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(err.detail || "API error");
+    let errMessage = "API error";
+
+    try {
+      const err = await res.json();
+      errMessage = err.detail || JSON.stringify(err);
+    } catch {
+      errMessage = res.statusText;
+    }
+
+    throw new Error(errMessage);
   }
 
   return res.json();
@@ -30,20 +44,33 @@ export async function apiLogin(email: string, password: string) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
-  if (!res.ok) throw new Error("Invalid email or password");
+
+  if (!res.ok) {
+    throw new Error("Invalid email or password");
+  }
+
   return res.json() as Promise<{ access_token: string }>;
 }
 
-export async function apiRegister(email: string, password: string, name: string) {
+export async function apiRegister(
+  email: string,
+  password: string,
+  name: string
+) {
   const res = await fetch(`${API_URL}/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password, name }),
   });
+
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: "Registration failed" }));
+    const err = await res
+      .json()
+      .catch(() => ({ detail: "Registration failed" }));
+
     throw new Error(err.detail);
   }
+
   return res.json() as Promise<{ access_token: string }>;
 }
 
@@ -53,17 +80,27 @@ export async function apiGetWorkspaces(token: string) {
   return apiFetch<Workspace[]>("/workspaces/", token);
 }
 
-export async function apiCreateServer(token: string, workspaceId: string, name: string) {
+export async function apiCreateServer(
+  token: string,
+  workspaceId: string,
+  name: string
+) {
   return apiFetch<{ server: Server; api_key: string }>(
     `/workspaces/${workspaceId}/servers`,
     token,
-    { method: "POST", body: JSON.stringify({ name }) }
+    {
+      method: "POST",
+      body: JSON.stringify({ name }),
+    }
   );
 }
 
 // ── Servers + Containers ─────────────────────────────────────────────────────
 
-export async function apiGetServers(token: string, workspaceId: string) {
+export async function apiGetServers(
+  token: string,
+  workspaceId: string
+) {
   return apiFetch<ServerWithContainers[]>(
     `/workspaces/${workspaceId}/servers`,
     token
@@ -85,14 +122,26 @@ export async function apiGetContainerMetrics(
   );
 }
 
-export async function apiGetContainerSummary(token: string, containerId: string) {
-  return apiFetch<ContainerSummary>(`/containers/${containerId}/summary`, token);
+export async function apiGetContainerSummary(
+  token: string,
+  containerId: string
+) {
+  return apiFetch<ContainerSummary>(
+    `/containers/${containerId}/summary`,
+    token
+  );
 }
 
 // ── Cost ─────────────────────────────────────────────────────────────────────
 
-export async function apiGetCost(token: string, workspaceId: string) {
-  return apiFetch<CostSummary>(`/workspaces/${workspaceId}/cost`, token);
+export async function apiGetCost(
+  token: string,
+  workspaceId: string
+) {
+  return apiFetch<CostSummary>(
+    `/workspaces/${workspaceId}/cost`,
+    token
+  );
 }
 
 // ── Types ────────────────────────────────────────────────────────────────────
