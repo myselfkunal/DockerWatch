@@ -20,6 +20,7 @@ dependencies = [
     "stripe",
     "psycopg2-binary",
     "email-validator",
+    "razorpay>=1.4.2"
     "passlib[bcrypt]",
     "pydantic-settings"
 ]
