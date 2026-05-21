@@ -58,11 +58,11 @@ async def create_workspace(
     db.add(workspace)
     await db.flush()
 
-    subscription = Subscription(workspace_id=workspace.id, status="active")
-    db.add(subscription)
-    await db.commit()
-    await db.refresh(workspace)
-    return workspace
+    # subscription = Subscription(workspace_id=workspace.id, status="active")
+    # db.add(subscription)
+    # await db.commit()
+    # await db.refresh(workspace)
+    # return workspace
 
 
 @router.get("/{workspace_id}", response_model=WorkspaceOut)
