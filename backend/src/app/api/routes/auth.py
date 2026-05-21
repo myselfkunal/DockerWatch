@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.schemas import LoginRequest, RegisterRequest, TokenResponse, UserOut
 from app.core.security import create_access_token, hash_password, verify_password
-from app.db.models import User, Workspace, Subscription
+from app.db.models import User, Workspace
 from app.db.session import get_db
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -33,9 +33,9 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
     db.add(workspace)
     await db.flush()
 
-    # Auto-create a free subscription record for this workspace
-    subscription = Subscription(workspace_id=workspace.id, status="active")
-    db.add(subscription)
+    # # Auto-create a free subscription record for this workspace
+    # subscription = Subscription(workspace_id=workspace.id, status="active")
+    # db.add(subscription)
 
     await db.commit()
 
