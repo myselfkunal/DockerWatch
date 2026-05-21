@@ -38,7 +38,7 @@ def get_client() -> razorpay.Client:
 def create_plan(name: str, amount_inr: int, interval: str = "monthly") -> dict:
     """
     Create a Razorpay plan. Run this once per pricing tier.
-    amount_inr is in paise (₹1 = 100 paise), so ₹1600 = 160000.
+    amount_inr is in paise (₹1 = 100 paise), so ₹999 = 99900.
     """
     client = get_client()
     plan = client.plan.create({

@@ -1,17 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Script from "next/script";
+import { useState } from "react";
 import { useAuth } from "../../layout";
-
-const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-
-interface BillingStatus {
-  plan: string;
-  status: string;
-  current_period_end: string | null;
-  razorpay_subscription_id: string | null;
-}
 
 const PLANS = [
   {
@@ -24,9 +14,9 @@ const PLANS = [
   {
     key: "pro",
     name: "Pro",
-    price: "₹1,600",
+    price: "₹999",
     period: "/month",
-    features: ["5 servers", "Unlimited containers", "90d history", "Slack + email alerts", "Weekly cost report"],
+    features: ["5 servers", "Unlimited containers", "90d history", "Slack + email", "Weekly cost report"],
     highlight: true,
   },
   {
@@ -34,203 +24,163 @@ const PLANS = [
     name: "Team",
     price: "₹4,100",
     period: "/month",
-    features: ["Unlimited servers", "Unlimited containers", "1yr history", "All alert channels", "API access", "Priority support"],
+    features: ["Unlimited servers", "Unlimited containers", "1yr history", "All channels", "API access"],
   },
 ];
 
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
-}
-
 export default function BillingPage() {
-  const { token, workspaceId } = useAuth();
-  const [billing, setBilling] = useState<BillingStatus | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [subscribing, setSubscribing] = useState<string | null>(null);
-  const [cancelling, setCancelling] = useState(false);
+  const { token } = useAuth();
+  const [email, setEmail] = useState("");
+  const [plan, setPlan] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
-
-  const load = async () => {
-    if (!token || !workspaceId) return;
-    const res = await fetch(`${API}/billing/status/${workspaceId}`, { headers });
-    const data = await res.json();
-    setBilling(data);
-    setLoading(false);
+  const joinWaitlist = async (selectedPlan: string) => {
+    setPlan(selectedPlan);
   };
 
-  useEffect(() => { load(); }, [token, workspaceId]);
+  const submitWaitlist = async () => {
+    if (!email.trim()) return;
+    setLoading(true);
 
-  const handleSubscribe = async (plan: string) => {
-    if (!token || !workspaceId) return;
-    setSubscribing(plan);
-
+    // For now just log it — wire to Resend or a Google Sheet later
+    // You can also POST to a simple /waitlist endpoint
     try {
-      const res = await fetch(`${API}/billing/subscribe`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/waitlist`, {
         method: "POST",
-        headers,
-        body: JSON.stringify({ plan, workspace_id: workspaceId }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, plan }),
       });
-      const data = await res.json();
-
-      // Open Razorpay checkout
-      const rzp = new window.Razorpay({
-        key: data.razorpay_key_id,
-        subscription_id: data.subscription_id,
-        name: "DockerWatch",
-        description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`,
-        theme: { color: "#00d084" },
-        handler: () => {
-          // Payment success — webhook will update DB async
-          // Just reload billing status after a short delay
-          setTimeout(() => load(), 2000);
-        },
-        modal: {
-          ondismiss: () => setSubscribing(null),
-        },
-      });
-      rzp.open();
-    } catch (e) {
-      alert("Failed to start checkout — try again");
-    } finally {
-      setSubscribing(null);
+    } catch {
+      // Silently fail — we'll add proper endpoint later
     }
-  };
 
-  const handleCancel = async () => {
-    if (!token || !workspaceId) return;
-    if (!confirm("Cancel subscription? You'll keep access until the end of your billing period.")) return;
-    setCancelling(true);
-    await fetch(`${API}/billing/cancel?workspace_id=${workspaceId}`, {
-      method: "POST", headers,
-    });
-    setCancelling(false);
-    load();
-  };
-
-  const formatDate = (iso: string | null) => {
-    if (!iso) return "—";
-    return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+    setLoading(false);
+    setSubmitted(true);
   };
 
   return (
-    <>
-      {/* Load Razorpay checkout script */}
-      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+    <div className="p-6 max-w-4xl mx-auto">
+      <div className="mb-6">
+        <div className="mono text-xs text-[var(--text-3)] mb-0.5">$ dockerwatch billing</div>
+        <h1 className="text-xl font-semibold text-[var(--text)]">Billing</h1>
+      </div>
 
-      <div className="p-6 max-w-4xl mx-auto">
-        <div className="mb-6">
-          <div className="mono text-xs text-[var(--text-3)] mb-0.5">$ dockerwatch billing</div>
-          <h1 className="text-xl font-semibold text-[var(--text)]">Billing</h1>
+      {/* Current plan banner */}
+      <div className="card p-4 mb-8 flex items-center gap-3">
+        <span className="text-[var(--green)]">✓</span>
+        <div>
+          <div className="mono text-sm font-semibold text-[var(--text)]">
+            You're on the Free plan
+          </div>
+          <div className="mono text-xs text-[var(--text-3)] mt-0.5">
+            Paid plans launching soon — join the waitlist to get notified + 30 days free when we launch
+          </div>
         </div>
+      </div>
 
-        {/* Current plan status */}
-        {billing && (
-          <div className="card p-4 mb-8 flex items-center justify-between">
-            <div>
-              <div className="mono text-xs text-[var(--text-3)] uppercase mb-1">Current plan</div>
-              <div className="flex items-center gap-3">
-                <span className="mono text-lg font-semibold text-[var(--text)] capitalize">
-                  {billing.plan}
-                </span>
-                <span className={`mono text-xs px-2 py-0.5 rounded border ${
-                  billing.status === "active"
-                    ? "border-[var(--green)] text-[var(--green)] bg-[var(--green-dim)]"
-                    : billing.status === "past_due"
-                    ? "border-[var(--amber)] text-[var(--amber)] bg-[var(--amber-dim)]"
-                    : "border-[var(--border)] text-[var(--text-3)]"
-                }`}>
-                  {billing.status}
-                </span>
+      {/* Waitlist success */}
+      {submitted && (
+        <div className="card p-5 mb-6 border-[var(--green)]">
+          <div className="mono text-sm text-[var(--green)] font-semibold mb-1">
+            ✓ You're on the waitlist for {plan.charAt(0).toUpperCase() + plan.slice(1)}
+          </div>
+          <div className="mono text-xs text-[var(--text-3)]">
+            We'll email you when paid plans launch. You'll get 30 days free as an early supporter.
+          </div>
+        </div>
+      )}
+
+      {/* Waitlist form */}
+      {plan && !submitted && (
+        <div className="card p-5 mb-6 border-[var(--green)]">
+          <div className="mono text-xs text-[var(--text-3)] uppercase mb-3">
+            Join waitlist — {plan} plan
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && submitWaitlist()}
+              placeholder="your@email.com"
+              className="flex-1 bg-[var(--bg)] border border-[var(--border)] rounded px-3 py-2
+                         mono text-sm text-[var(--text)] placeholder:text-[var(--text-3)]
+                         focus:outline-none focus:border-[var(--green)] transition-colors"
+            />
+            <button
+              onClick={submitWaitlist}
+              disabled={loading || !email.trim()}
+              className="mono text-xs bg-[var(--green)] text-black font-semibold px-4 py-2
+                         rounded hover:opacity-90 disabled:opacity-50 transition-opacity"
+            >
+              {loading ? "..." : "notify me"}
+            </button>
+            <button
+              onClick={() => setPlan("")}
+              className="mono text-xs text-[var(--text-3)] hover:text-[var(--text)] px-3"
+            >
+              cancel
+            </button>
+          </div>
+          <div className="mono text-xs text-[var(--text-3)] mt-2">
+            Early supporters get 30 days free when paid plans launch.
+          </div>
+        </div>
+      )}
+
+      {/* Pricing cards */}
+      <div className="grid grid-cols-3 gap-4">
+        {PLANS.map((p) => (
+          <div
+            key={p.key}
+            className={`card p-5 flex flex-col ${p.highlight ? "border-[var(--green)]" : ""}`}
+          >
+            {p.highlight && (
+              <div className="mono text-xs text-[var(--green)] mb-2 uppercase tracking-wider">
+                most popular
               </div>
-              {billing.current_period_end && (
-                <div className="mono text-xs text-[var(--text-3)] mt-1">
-                  {billing.status === "cancelling" ? "Access until" : "Renews"}: {formatDate(billing.current_period_end)}
-                </div>
-              )}
+            )}
+
+            <div className="mono text-sm font-semibold text-[var(--text)] mb-1">{p.name}</div>
+            <div className="mono mb-4">
+              <span className="text-2xl font-semibold text-[var(--text)]">{p.price}</span>
+              <span className="text-xs text-[var(--text-3)]">{p.period}</span>
             </div>
 
-            {billing.plan !== "free" && billing.status !== "cancelling" && (
+            <ul className="space-y-1.5 mb-6 flex-1">
+              {p.features.map((f) => (
+                <li key={f} className="mono text-xs text-[var(--text-2)] flex gap-2">
+                  <span className="text-[var(--green)]">✓</span>
+                  {f}
+                </li>
+              ))}
+            </ul>
+
+            {p.key === "free" ? (
+              <div className="mono text-xs text-center text-[var(--green)] py-2
+                              border border-[var(--green)] bg-[var(--green-dim)] rounded">
+                current plan
+              </div>
+            ) : (
               <button
-                onClick={handleCancel}
-                disabled={cancelling}
-                className="mono text-xs text-[var(--text-3)] hover:text-[var(--red)] transition-colors disabled:opacity-50"
+                onClick={() => joinWaitlist(p.key)}
+                className={`mono text-xs font-semibold py-2 rounded transition-all
+                  ${p.highlight
+                    ? "bg-[var(--green)] text-black hover:opacity-90"
+                    : "border border-[var(--border)] text-[var(--text)] hover:border-[var(--green)] hover:text-[var(--green)]"
+                  }`}
               >
-                {cancelling ? "cancelling..." : "cancel subscription"}
+                join waitlist →
               </button>
             )}
           </div>
-        )}
-
-        {/* Pricing cards */}
-        <div className="grid grid-cols-3 gap-4">
-          {PLANS.map((plan) => {
-            const isCurrent = billing?.plan === plan.key;
-            const isHigher =
-              (billing?.plan === "free" && (plan.key === "pro" || plan.key === "team")) ||
-              (billing?.plan === "pro" && plan.key === "team");
-
-            return (
-              <div
-                key={plan.key}
-                className={`card p-5 flex flex-col ${plan.highlight ? "border-[var(--green)]" : ""}`}
-              >
-                {plan.highlight && (
-                  <div className="mono text-xs text-[var(--green)] mb-2 uppercase tracking-wider">
-                    most popular
-                  </div>
-                )}
-
-                <div className="mono text-sm font-semibold text-[var(--text)] mb-1">{plan.name}</div>
-                <div className="mono mb-4">
-                  <span className="text-2xl font-semibold text-[var(--text)]">{plan.price}</span>
-                  <span className="text-xs text-[var(--text-3)]">{plan.period}</span>
-                </div>
-
-                <ul className="space-y-1.5 mb-6 flex-1">
-                  {plan.features.map((f) => (
-                    <li key={f} className="mono text-xs text-[var(--text-2)] flex gap-2">
-                      <span className="text-[var(--green)]">✓</span>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-
-                {isCurrent ? (
-                  <div className="mono text-xs text-center text-[var(--text-3)] py-2 border border-[var(--border)] rounded">
-                    current plan
-                  </div>
-                ) : plan.key === "free" ? (
-                  <div className="mono text-xs text-center text-[var(--text-3)] py-2">
-                    —
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => handleSubscribe(plan.key)}
-                    disabled={subscribing === plan.key || !isHigher}
-                    className={`mono text-xs font-semibold py-2 rounded transition-opacity
-                      ${plan.highlight
-                        ? "bg-[var(--green)] text-black hover:opacity-90"
-                        : "border border-[var(--border)] text-[var(--text)] hover:border-[var(--green)] hover:text-[var(--green)]"
-                      } disabled:opacity-50`}
-                  >
-                    {subscribing === plan.key ? "opening checkout..." : `upgrade to ${plan.name}`}
-                  </button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Test mode notice */}
-        {process.env.NODE_ENV === "development" && (
-          <div className="mt-6 mono text-xs text-[var(--text-3)] bg-[var(--bg-3)] border border-[var(--border)] rounded px-4 py-3">
-            ⚠ Test mode — use Razorpay test card: 4111 1111 1111 1111 · CVV: any · Expiry: any future date
-          </div>
-        )}
+        ))}
       </div>
-    </>
+
+      <div className="mt-6 mono text-xs text-[var(--text-3)] text-center">
+        Paid plans launching soon · All plans include a 14-day free trial
+      </div>
+    </div>
   );
 }

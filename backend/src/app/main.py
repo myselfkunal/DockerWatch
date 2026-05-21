@@ -14,6 +14,7 @@ from app.api.routes import (
     metrics,
     cost_routes,
     alerts,
+    waitlist,
 )
 
 from app.api.routes.billing import router as billing_router
@@ -31,7 +32,7 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
-    Starts background services on boot.
+    Starts background services on startup.
     Stops them cleanly on shutdown.
     """
 
@@ -102,12 +103,13 @@ app.include_router(cost_routes.router)
 
 app.include_router(alerts.router)
 
-# Billing / subscriptions
 app.include_router(
     billing_router,
     prefix="/billing",
     tags=["billing"],
 )
+
+app.include_router(waitlist.router)
 
 
 # ---------------------------------------------------------------------------

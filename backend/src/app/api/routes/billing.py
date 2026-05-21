@@ -108,7 +108,7 @@ async def subscribe(
 
     await db.commit()
 
-    amount = 160000 if body.plan == "pro" else 410000
+    amount = 99900 if body.plan == "pro" else 249900
 
     return SubscribeResponse(
         subscription_id=subscription["id"],
