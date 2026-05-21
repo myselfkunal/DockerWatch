@@ -76,7 +76,7 @@ function Chart({
             }}
             labelStyle={{ color: "var(--text-2)" }}
             itemStyle={{ color }}
-            formatter={(v: number) => formatter ? formatter(v) : v}
+            formatter={(v) => (formatter && typeof v === "number" ? formatter(v) : v)}
           />
           <Line
             type="monotone"
