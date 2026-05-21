@@ -1,4 +1,5 @@
 import hashlib
+from http import server
 import secrets
 import uuid
 
@@ -135,7 +136,12 @@ async def create_server(
     await db.commit()
     await db.refresh(server)
 
-    return ServerCreatedResponse(server=server, api_key=raw_key)
+    await db.refresh(server)
+
+    return ServerCreatedResponse(
+        server=server,
+        api_key=raw_key
+    )
 
 
 @router.delete("/{workspace_id}/servers/{server_id}", status_code=status.HTTP_204_NO_CONTENT)
