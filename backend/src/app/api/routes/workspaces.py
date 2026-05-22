@@ -138,10 +138,18 @@ async def create_server(
 
     await db.refresh(server)
 
-    return ServerCreatedResponse(
-        server=server,
-        api_key=raw_key
-    )
+    await db.refresh(server)
+
+    return {
+        "server": {
+            "id": str(server.id),
+            "name": server.name,
+            "workspace_id": str(server.workspace_id),
+            "created_at": server.created_at.isoformat(),
+            "containers": []
+        },
+        "api_key": raw_key
+    }
 
 
 @router.delete("/{workspace_id}/servers/{server_id}", status_code=status.HTTP_204_NO_CONTENT)
