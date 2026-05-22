@@ -146,11 +146,15 @@ async def create_server(
             "name": server.name,
             "workspace_id": str(server.workspace_id),
             "created_at": server.created_at.isoformat(),
+            "last_seen_at": (
+                server.last_seen_at.isoformat()
+                if server.last_seen_at
+                else None
+            ),
             "containers": []
         },
         "api_key": raw_key
-    }
-
+        }
 
 @router.delete("/{workspace_id}/servers/{server_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_server(
