@@ -21,7 +21,7 @@ You're running Docker Compose or a few containers on a VPS. You have no idea whi
 | Cost intelligence | ✅ Built-in | ❌ | ❌ |
 | Idle container detection | ✅ | ❌ | Manual |
 | Self-hostable | ✅ | ❌ | ✅ |
-| Price | Free / $19mo | $300+/mo | Free (your time) |
+| Price | Free / $9mo | $300+/mo | Free (your time) |
 
 ---
 
@@ -39,12 +39,24 @@ You're running Docker Compose or a few containers on a VPS. You have no idea whi
 
 ## Quick start (hosted)
 
-The fastest way — use the hosted version at **[dockerwatch.io](https://dockerwatch.io)**
+The fastest way — use the hosted version at **[docker-watch.vercel.app](https://docker-watch.vercel.app)**
+
+## Quick start (hosted)
+
+1. Open Dashboard
+2. Go to Getting Started
+3. Generate API Key
+4. Run:
 
 ```bash
 pip install dockerwatch-agent
-dockerwatch-agent start --api-key=YOUR_KEY
+
+dockerwatch-agent start \
+  --api-key=YOUR_API_KEY \
+  --api-url=https://your-api-url.com
 ```
+
+Containers appear in ~30 seconds.
 
 Free tier: 1 server, 5 containers, 24h history. No credit card.
 
