@@ -87,9 +87,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     if (!token && !PUBLIC_PATHS.includes(pathname)) {
       router.push("/auth/login");
     }
-    if (token && PUBLIC_PATHS.includes(pathname)) {
-      router.push("/dashboard");
-    }
+    
   }, [token, pathname]);
 
   return <>{children}</>;
