@@ -8,7 +8,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org)
 
-[**Live Demo**](https://docker-watch.vercel.app/auth/login) · [**PyPI**](https://pypi.org/project/dockerwatch-agent/) · [**Report Bug**](https://github.com/myselfkunal/dockerwatch/issues) · [**Request Feature**](https://github.com/myselfkunal/dockerwatch/issues)
+[**Live Demo**](https://docker-watch.vercel.app) · [**PyPI**](https://pypi.org/project/dockerwatch-agent/) · [**Report Bug**](https://github.com/myselfkunal/dockerwatch/issues) · [**Request Feature**](https://github.com/myselfkunal/dockerwatch/issues)
 
 ![DockerWatch Dashboard](docs/screenshots/dashboard.png)
 
