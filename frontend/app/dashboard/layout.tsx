@@ -6,6 +6,7 @@ import { useAuth } from "../layout";
 
 const NAV = [
   { href: "/dashboard",           label: "overview",   icon: "⬡" },
+  { href: "/dashboard/getting-started",  label: "getting started",  icon: "▶" },
   { href: "/dashboard/cost",      label: "cost",       icon: "◈" },
   { href: "/dashboard/alerts",    label: "alerts",     icon: "◉" },
   { href: "/dashboard/billing", label: "billing", icon: "◇" },
